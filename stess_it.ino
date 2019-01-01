@@ -10,18 +10,19 @@
 #include <LiquidCrystal_I2C.h>
 #include "RTClib.h"
 
+
 //******************* Wi-Fi credentials ******************
-const char* ssid = "ZiggoC6C6A6C";
-const char* password = "3YjjjrzteyFk";
-//const char* ssid = "AndroidAP_63";
-//const char* password = "00000000";
+//const char* ssid = "ZiggoC6C6A6C";
+//const char* password = "3YjjjrzteyFk";
+const char* ssid = "AndroidAP_63";
+const char* password = "00000000";
 //********************************************************
 
-#define INFLUXDB_HOST "192.168.178.157"
+#define INFLUXDB_HOST "192.168.43.227"
 #define INFLUXDB_PORT "8086"
 #define INFLUXDB_DATABASE "measurements"
 
-// Create a TCP Server on port 8085
+// Create a TCP Server on port "X"
 WiFiServer server(5045);
 WiFiClient client;
 
@@ -70,7 +71,7 @@ boolean haveBaseline;
 int const ageOfPatient = 18;
 int rangeHRV[] = {40, 35, 26};
 int minHRV;
-int measurementPin = D0;
+int measurementPin = D3;
 
 byte const windowSize = 4;
 int myData[windowSize];
