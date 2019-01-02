@@ -1,4 +1,5 @@
 #include <Adafruit_ADS1015.h>
+#include <ArduinoJson.h>
 #include <PulseSensorPlayground.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
@@ -13,8 +14,8 @@
 //******************* Wi-Fi credentials ******************
 //const char* ssid = "ZiggoC6C6A6C";
 //const char* password = "3YjjjrzteyFk";
-char* ssid = "AndroidAP_63";
-char* password = "00000000";
+char ssid[50];
+char password[50];
 //********************************************************
 
 #define INFLUXDB_HOST "192.168.43.227"
@@ -81,7 +82,7 @@ char buf[12];
 
 RTC_DS3231 rtc;
 
-//********************************LCD config**************************************
+//********************************LCD special chars**************************************
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 int setCursorPoint;
 uint8_t arrowUp[8] = {0x04, 0x0E, 0x15, 0x04, 0x04, 0x04, 0x04, 0x00};
@@ -90,7 +91,7 @@ uint8_t arrowDown[8] = {0x04, 0x04, 0x04, 0x04, 0x15, 0x0E, 0x04, 0x00};
 
 void setup() {
   SPIFFS.begin();
-
+  setWifiConfig();
   ads.setGain(GAIN_ONE);                  //DO NOT EXCEED +/- 4.096V on sensor reading, otherwise you may damage the ADC.
   ads.begin();
 
@@ -99,7 +100,7 @@ void setup() {
   lcd.createChar(0, arrowUp);
   lcd.createChar(1, arrowDown);
   lcd.home();
-  lcd.print("Works, please");
+  lcd.print("Setting up...");
 
   Serial.begin(115200);
   WiFi.begin(ssid, password);
@@ -124,6 +125,41 @@ void setup() {
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
   pinMode(D3, INPUT);
+}
+
+void setWifiConfig() {
+  //read configuration from FS json
+  Serial.println("mounting FS...");
+
+  if (SPIFFS.begin()) {
+    Serial.println("mounted file system");
+    if (SPIFFS.exists("/config.json")) {
+      //file exists, reading and loading
+      Serial.println("reading config file");
+      File configFile = SPIFFS.open("/config.json", "r");
+      if (configFile) {
+        Serial.println("opened config file");
+        size_t size = configFile.size();
+        // Allocate a buffer to store contents of the file.
+        std::unique_ptr<char[]> buf(new char[size]);
+
+        configFile.readBytes(buf.get(), size);
+        DynamicJsonBuffer jsonBuffer;
+        JsonObject& json = jsonBuffer.parseObject(buf.get());
+        json.printTo(Serial);
+        if (json.success()) {
+          Serial.println("\nparsed json");
+          strcpy(ssid, json["ssid"]);
+          strcpy(password, json["password"]);
+        } else {
+          Serial.println("failed to load json config");
+        }
+        configFile.close();
+      }
+    }
+  } else {
+    Serial.println("failed to mount FS");
+  }
 }
 
 void getBPM();
