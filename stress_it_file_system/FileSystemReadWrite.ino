@@ -3,6 +3,7 @@ boolean readBaselineFS() {
   int sumHRV = 0;
   int sumGSR = 0;
   int n = 3;         //number of measurements to use for calculating baseline
+  SPIFFS.begin();
   if (SPIFFS.exists("/BASELINE.txt")) {
     baselineFile = SPIFFS.open("/BASELINE.txt", "r");
     baselineBPM = baselineFile.readStringUntil('\n').toInt();

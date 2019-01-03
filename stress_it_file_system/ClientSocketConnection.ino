@@ -16,12 +16,12 @@ void sendToTcpClient() {
         previousMillis = millis();
         QS = false;                         // Quantified Self "QS" true when arduino finds a heartbeat
       }
-      if (dbAvailable && isReady) {
-        getGSR();
-        //  dbAvailable = saveToDB();
-        saveToDB();
-        isReady = false;
-      }
+//      if (dbAvailable && isReady) {
+//        getGSR();
+//        //  dbAvailable = saveToDB();
+//        saveToDB();
+//        isReady = false;
+//      }
       delay(20);
     }
   }

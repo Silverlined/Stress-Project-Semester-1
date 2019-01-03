@@ -10,12 +10,15 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include "RTClib.h"
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+#include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
 
 //******************* Wi-Fi credentials ******************
 //const char* ssid = "ZiggoC6C6A6C";
 //const char* password = "3YjjjrzteyFk";
-char ssid[50];
-char password[50];
+//char ssid[50];
+//char password[50];
 //********************************************************
 
 #define INFLUXDB_HOST "192.168.43.227" // local ip address, right now it is not valid.
@@ -93,8 +96,6 @@ uint8_t arrowDown[8] = {0x04, 0x04, 0x04, 0x04, 0x15, 0x0E, 0x04, 0x00};
 //********************************************************************************
 
 void setup() {
-  SPIFFS.begin();
-  setWifiConfig();
   ads.setGain(GAIN_ONE);                  //DO NOT EXCEED +/- 4.096V on sensor reading, otherwise you may damage the ADC.
   ads.begin();
 
@@ -106,15 +107,11 @@ void setup() {
   lcd.print("Setting up...");
 
   Serial.begin(115200);
-  WiFi.begin(ssid, password);
-  Serial.println("");
-  //Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.print("Connected to ");
-  Serial.println(ssid);
+  WiFiManager wifiManager;
+  //reset saved settings
+  //wifiManager.resetSettings();
+  wifiManager.autoConnect();
+
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 
@@ -130,40 +127,40 @@ void setup() {
   pinMode(D3, INPUT);
 }
 
-void setWifiConfig() {
-  //read configuration from FS json
-  Serial.println("mounting FS...");
-
-  if (SPIFFS.begin()) {
-    Serial.println("mounted file system");
-    if (SPIFFS.exists("/config.json")) {
-      //file exists, reading and loading
-      Serial.println("reading config file");
-      File configFile = SPIFFS.open("/config.json", "r");
-      if (configFile) {
-        Serial.println("opened config file");
-        size_t size = configFile.size();
-        // Allocate a buffer to store contents of the file.
-        std::unique_ptr<char[]> buf(new char[size]);
-
-        configFile.readBytes(buf.get(), size);
-        DynamicJsonBuffer jsonBuffer;
-        JsonObject& json = jsonBuffer.parseObject(buf.get());
-        json.printTo(Serial);
-        if (json.success()) {
-          Serial.println("\nparsed json");
-          strcpy(ssid, json["ssid"]);
-          strcpy(password, json["password"]);
-        } else {
-          Serial.println("failed to load json config");
-        }
-        configFile.close();
-      }
-    }
-  } else {
-    Serial.println("failed to mount FS");
-  }
-}
+//void setWifiConfig() {
+//  //read configuration from FS json
+//  Serial.println("mounting FS...");
+//
+//  if (SPIFFS.begin()) {
+//    Serial.println("mounted file system");
+//    if (SPIFFS.exists("/config.json")) {
+//      //file exists, reading and loading
+//      Serial.println("reading config file");
+//      File configFile = SPIFFS.open("/config.json", "r");
+//      if (configFile) {
+//        Serial.println("opened config file");
+//        size_t size = configFile.size();
+//        // Allocate a buffer to store contents of the file.
+//        std::unique_ptr<char[]> buf(new char[size]);
+//
+//        configFile.readBytes(buf.get(), size);
+//        DynamicJsonBuffer jsonBuffer;
+//        JsonObject& json = jsonBuffer.parseObject(buf.get());
+//        json.printTo(Serial);
+//        if (json.success()) {
+//          Serial.println("\nparsed json");
+//          strcpy(ssid, json["ssid"]);
+//          strcpy(password, json["password"]);
+//        } else {
+//          Serial.println("failed to load json config");
+//        }
+//        configFile.close();
+//      }
+//    }
+//  } else {
+//    Serial.println("failed to mount FS");
+//  }
+//}
 
 void getBPM();
 void getGSR();
@@ -172,12 +169,12 @@ void loop() {
   if (haveBaseline) {
     sendToTcpClient();
     getBPM();
-    if (dbAvailable && isReady) {
-      getGSR();
-      //  dbAvailable = saveToDB();
-      saveToDB();
-      isReady = false;
-    }
+    //    if (dbAvailable && isReady) {
+    //      getGSR();
+    //      //  dbAvailable = saveToDB();
+    //      saveToDB();
+    //      isReady = false;
+    //    }
   } else {
     getBPM();
     if (!digitalRead(measurementPin) && isReady) {
