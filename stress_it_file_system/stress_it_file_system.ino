@@ -12,8 +12,8 @@
 #include "RTClib.h"
 
 //******************* Wi-Fi credentials ******************
-//const char* ssid = "ZiggoC6C6A6C";
-//const char* password = "3YjjjrzteyFk";
+//const char* ssid = "";
+//const char* password = "";
 char ssid[50];
 char password[50];
 //********************************************************
